@@ -30,6 +30,7 @@ func Generator(ctx context.Context, ch chan<- int64, fn func(int64)) {
 func Worker(in <-chan int64, out chan<- int64) {
 	defer close(out)
 	for num := range in {
+		time.Sleep(1 * time.Millisecond)
 		out <- num
 	}
 }
@@ -43,11 +44,14 @@ func main() {
 	// для проверки будем считать количество и сумму отправленных чисел
 	var inputSum int64   // сумма сгенерированных чисел
 	var inputCount int64 // количество сгенерированных чисел
+	var my sync.Mutex
 
 	// генерируем числа, считая параллельно их количество и сумму
 	go Generator(ctx, chIn, func(i int64) {
+		my.Lock() // блокируем мьютекс
 		inputSum += i
 		inputCount++
+		my.Unlock() // разблокируем мьютекс
 	})
 
 	const NumOut = 5 // количество обрабатывающих горутин и каналов
